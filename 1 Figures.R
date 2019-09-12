@@ -1,7 +1,7 @@
 library(dplyr)
 library(ggplot2)
 
-theme_hve = function (base_size = 14, 
+theme_hve = function (base_size = 20, 
                       base_family = "", 
                       base_line_size = base_size/22, 
                       base_rect_size = base_size/22) {
@@ -26,30 +26,66 @@ ERPfix = read.delim("./1 ERP-fix/AllSubs_acceptedTrials_long_nobe_nobs_withRT_me
 
 # bar graph
 # RT
+win.metafile("./4 Figures/Study1_RT_bar.wmf")
+
 ggplot(ERPfix, aes(Race, RT, fill = Fix)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge", color = "black") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1) +
   labs(y = "Reaction Time", x = "Target Race") +
   scale_fill_manual(values=c("white","grey70"), guide = guide_legend(title = "Fixation")) +
   theme_hve() +
-  coord_cartesian(ylim = c(400, 500)) +
-  ggtitle("Race task")
+  theme(legend.position = "bottom") +
+  coord_cartesian(ylim = c(400, 500))
 
-ggsave("./4 Figures/Study1_RT.eps")
+dev.off()
+
+win.metafile("./4 Figures/Study1_RT_point.wmf")
+
+ggplot(ERPfix, aes(Race, RT, shape = Fix), color = "black") +
+  stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9)) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1) + 
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_shape_manual(values=c(1, 16)) +
+  #scale_fill_manual(values=c("white","grey70"), guide = guide_legend(title = "Fixation")) +
+  theme_hve() +
+  theme(legend.position = "bottom") +
+  coord_cartesian(ylim = c(440, 475))
+
+dev.off()
+
 
 # P2
+win.metafile("./4 Figures/Study1_P2_v1.wmf")
+
 ggplot(ERPfix, aes(Race, MeanAmp, group = Fix)) +
-  stat_summary(fun.y = mean, geom = "point", position = position_dodge(width=.9), color = "blue") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, color = "blue") +
+  stat_summary(fun.y = mean, geom = "point", position = position_dodge(width=.9), color = "blue", size = 3) +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 2, color = "blue") +
   labs(y = "P2 amplitude", x = "Target Race") +
   #scale_fill_manual(guide = guide_legend(title = "Fixation")) +
   theme_hve() +
   coord_cartesian(ylim = c(1, 5)) +
   scale_y_continuous(position = "right") +
   theme(axis.title = element_text(color = "blue"),
-        axis.text = element_text(color = "blue")) +
-  ggtitle("Race task")
+        axis.text = element_text(color = "blue"))
 
+dev.off()
+
+win.metafile("./4 Figures/Study1_P2_point_v2.wmf")
+
+ggplot(ERPfix, aes(Race, MeanAmp, shape = Fix)) +
+  stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
+  labs(y = "P2 amplitude", x = "Target Race") +
+  scale_shape_manual(values=c(1, 16)) +
+  #scale_fill_manual(values=c("white","grey70"), guide = guide_legend(title = "Fixation")) +
+  theme_hve() +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(position = "right") +
+  coord_cartesian(ylim = c(1, 5)) +
+  theme(axis.title = element_text(color = "blue"),
+        axis.text = element_text(color = "blue"))
+
+dev.off()
 
 # Study 2 -----------------------------------------------------------------
 
