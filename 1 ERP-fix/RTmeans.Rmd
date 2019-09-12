@@ -1,0 +1,92 @@
+---
+title: "RT mean plots- ERP-Fix"
+author: "Hannah"
+date: "8/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, out.width = "50%", out.height = "50%")
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggpubr)
+library(cowplot)
+
+
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+```
+
+## 1. RTs
+### Race categorization  
+DV is trial level RT. Incorrect trials and trials with +/- 75 uV artifacts are excluded. Subjects with < 50% trials accepted are excluded (subs 32, 51 and 62).
+
+P2.mean = subject mean (separate subject mean for each electrode)  
+P2.meancent.scale = trial level P2 amplitude centered around subject/electrode mean 
+
+Total sample n = 65  
+Included n = 62
+
+```{r}
+# Add predictors, effect coding
+dat$TarRace.e = -1
+dat$TarRace.e[dat$Race == "White"] = 1
+
+dat$Fix.e = -1
+dat$Fix.e[dat$Fix == "forehead"] = 1
+
+# model specification
+# lmer(RT ~ 1 + (TarRace.e*Fix.e|Subject), data = dat) %>%  summary() #use this
+
+m1 = lmer(RT ~ TarRace.e*Fix.e + (TarRace.e+Fix.e|Subject), data = filter(dat, Electrode == "CZ")) #only need one observation per trial
+
+# check convergence issue
+ # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
+ # max(abs(relgrad)) # since this value is really small, model is ok
+ 
+sum.m1 = summary(m1)
+sum.m1$call
+sum.m1$varcor
+kable(round(sum.m1$coefficients, digits=3)) %>% 
+  kable_styling(full_width = F, position = "center")
+
+rts = filter(dat, Electrode == "CZ") %>% 
+  select(RT, Race, Fix) %>% 
+  group_by(Race, Fix) %>% 
+  summarise_all(list(RTmean = mean)) %>% 
+  as.data.frame()
+
+sds = filter(dat, Electrode == "CZ") %>% 
+  select(RT, Race, Fix) %>% 
+  group_by(Race, Fix) %>% 
+  summarise_all(list(RTsd = sd)) %>% 
+  as.data.frame() 
+
+kable(cbind(rts, sds[3])) %>% 
+  kable_styling(full_width = F, position = "center")
+
+
+# bar graph
+ggplot(dat, aes(Race, RT, fill = Fix)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  theme_bw() +
+  ggtitle("Race task") +
+  coord_cartesian(ylim = c(400, 500)) +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 14),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+```
+

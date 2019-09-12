@@ -1,0 +1,242 @@
+---
+title: "RT mean plots: Race-Gen"
+author: "Hannah"
+date: "8/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, out.width = "50%", out.height = "50%")
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggpubr)
+library(cowplot)
+
+
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+```
+
+## 1. RTs
+
+### 1a. Gender categorization task
+DV is trial level data. Incorrect trials and trials with +/- 75 uV artifacts are excluded. Subjects with < 50% trials accepted are excluded. 
+
+Included n = 63 (32 black, 31 white)
+
+```{r}
+gendat = filter(dat, Task == "Gender")
+
+# Add predictors, effect coding
+gendat$TarRace.e = -1
+gendat$TarRace.e[gendat$TarRace == "White"] = 1
+
+gendat$TarGender.e = -1
+gendat$TarGender.e[gendat$TarGender == "male"] = 1
+
+gendat$ParRace.e = -1
+gendat$ParRace.e[gendat$ParRace == "White"] = 1
+
+gendat$Fix.e = -1
+gendat$Fix.e[gendat$Fix == "forehead"] = 1
+
+# model specification
+lmer(RT ~ 1 + (TarRace.e*TarGender.e*Fix.e|Subject), data = gendat) %>%  summary()
+lmer(RT ~ 1 + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat) %>%  summary() # use this
+
+m1 = lmer(RT ~ TarRace.e*TarGender.e*Fix.e*ParRace.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat)
+
+# check convergence issue
+ # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
+ # max(abs(relgrad)) # since this value is really small, model is ok
+
+sum.m1 = summary(m1)
+sum.m1$call
+sum.m1$varcor
+kable(round(sum.m1$coefficients, digits=3)) %>% 
+  kable_styling(full_width = F, position = "center")
+
+rts = filter(gendat, Electrode == "CZ") %>% 
+  select(RT, TarRace, TarGender, Fix, ParRace) %>% 
+  group_by(TarRace, TarGender, Fix, ParRace) %>% 
+  summarise_all(list(RTmean = mean)) %>% 
+  as.data.frame()
+
+sds = filter(gendat, Electrode == "CZ") %>% 
+  select(RT, TarRace, TarGender, Fix, ParRace) %>% 
+  group_by(TarRace, TarGender, Fix, ParRace) %>% 
+  summarise_all(list(RTsd = sd)) %>% 
+  as.data.frame()
+
+kable(cbind(rts, sds[5])) %>% 
+  kable_styling(full_width = F, position = "center")
+```
+
+See markdown code for breaking down interactions.
+```{r, eval=F}
+m1.b = lmer(RT ~ TarRace.e*TarGender.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = filter(gendat, ParRace == "Black"))
+m1.w = lmer(RT ~ TarRace.e*TarGender.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = filter(gendat, ParRace == "White"))
+
+m1.be = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, ParRace == "Black" & Fix == "eyes"))
+m1.bf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, ParRace == "Black" & Fix == "forehead"))
+
+```
+
+
+```{r}
+# bar graph
+facet_labels = c(Black = "Black participants", White = "White participants")
+ggplot(gendat, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  facet_wrap(~ParRace, labeller=labeller(ParRace = facet_labels)) + 
+  ggtitle("Gender task: Collapsed across fixation") +
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
+  theme_bw() +
+  coord_cartesian(ylim = c(400, 500)) +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 14),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# separated by fixation
+ggplot(gendat, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  facet_wrap(~ParRace*Fix, labeller=labeller(ParRace = facet_labels)) + 
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
+  theme_bw() +
+  ggtitle("Gender task") +
+  coord_cartesian(ylim = c(400, 500)) +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 14),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+### 1b. Race categorization task
+
+DV is trial level data. Incorrect trials and trials with +/- 75 uV artifacts are excluded. Subjects with < 50% trials accepted are excluded. 
+
+Included n = 63 (33 black, 30 white)
+
+```{r}
+racedat = filter(dat, Task == "Race")
+
+# Add predictors, effect coding
+racedat$TarRace.e = -1
+racedat$TarRace.e[racedat$TarRace == "White"] = 1
+
+racedat$TarGender.e = -1
+racedat$TarGender.e[racedat$TarGender == "male"] = 1
+
+racedat$ParRace.e = -1
+racedat$ParRace.e[racedat$ParRace == "White"] = 1
+
+racedat$Fix.e = -1
+racedat$Fix.e[racedat$Fix == "forehead"] = 1
+
+# model specification
+# lmer(RT ~ 1 + (TarRace.e*TarGender.e|Subject), data = racedat) %>%  summary()
+# lmer(RT ~ 1 + (TarRace.e+TarGender.e|Subject), data = racedat) %>%  summary() # use this
+
+m2 = lmer(RT ~ TarRace.e*TarGender.e*ParRace.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = racedat)
+
+sum.m2 = summary(m2)
+sum.m2$call
+sum.m2$varcor
+kable(round(sum.m1$coefficients, digits=3)) %>% 
+  kable_styling(full_width = F, position = "center")
+
+rts = filter(racedat, Electrode == "CZ") %>% 
+  select(RT, TarRace, TarGender, Fix, ParRace) %>% 
+  group_by(TarRace, TarGender, Fix, ParRace) %>% 
+  summarise_all(list(RTmean = mean)) %>% 
+  as.data.frame()
+
+sds = filter(racedat, Electrode == "CZ") %>% 
+  select(RT, TarRace, TarGender, Fix, ParRace) %>% 
+  group_by(TarRace, TarGender, Fix, ParRace) %>% 
+  summarise_all(list(RTsd = sd)) %>% 
+  as.data.frame()
+
+kable(cbind(rts, sds[5])) %>% 
+  kable_styling(full_width = F, position = "center")
+```
+See markdown code for breaking down interactions.
+```{r, eval=F}
+m2.b = lmer(RT ~ TarRace.e*TarGender.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = filter(racedat, ParRace == "Black"))
+m2.w = lmer(RT ~ TarRace.e*TarGender.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = filter(racedat, ParRace == "White"))
+
+m2.we = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "White" & Fix == "eyes"))
+m2.wf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "White" & Fix == "forehead"))
+
+m2.be = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "Black" & Fix == "eyes"))
+m2.bf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "Black" & Fix == "forehead"))
+
+```
+
+
+```{r}
+# bar graph
+facet_labels = c(Black = "Black participants", White = "White participants")
+ggplot(racedat, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  facet_wrap(~ParRace, labeller=labeller(ParRace = facet_labels)) + 
+  #  ggtitle("Total number of errors") +
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
+  theme_bw() +
+  ggtitle("Race task") +
+  coord_cartesian(ylim = c(400, 500)) +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 14),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+# separated by fixation
+ggplot(racedat, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  facet_wrap(~ParRace*Fix, labeller=labeller(ParRace = facet_labels)) + 
+  #  ggtitle("Total number of errors") +
+  labs(y = "Reaction Time", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
+  theme_bw() +
+  ggtitle("Race task") +
+  coord_cartesian(ylim = c(400, 500)) +
+  theme(panel.grid.major = element_line(color = "white"),
+        panel.grid.minor = element_line(color = "white"),
+        strip.text.x = element_text(face = "bold", size = 14),
+        strip.background = element_rect(fill = "grey98"),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+

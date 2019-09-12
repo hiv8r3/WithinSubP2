@@ -1,0 +1,317 @@
+---
+title: "ERP-fix: Disaggregate analyses for P2->RT"
+author: "Hannah"
+date: "8/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      out.width = "50%", # shrinks images by half when knitted to html
+                      out.height = "50%")
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(ggpubr)
+library(cowplot)
+library(kableExtra)
+
+
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+```
+
+## 1. Dissaggregate analyses predicting RT from P2 amplitude  
+The P2.meancent.scale variable was standardized by subject and electrode (i.e., centered around the subject/electrode mean and then scaled to have a standard deviation of 1).  
+
+
+### A. Race categorization task
+
+DV is trial level RT. Incorrect trials and trials with +/- 75 uV artifacts are excluded. Subjects with < 50% trials accepted are excluded (subs 32, 51 and 62).
+
+P2.mean = subject mean (separate subject mean for each electrode)  
+P2.meancent.scale = trial level P2 amplitude centered around subject/electrode mean 
+
+Total sample n = 65  
+Included n = 62
+
+```{r eval = F}
+# calculate median number of trials per sub in each condition
+count = filter(dat, Electrode == "CZ") %>% 
+  count(Subject, Condition) %>% 
+  as.data.frame()
+
+median(count$n)
+max(count$n)
+min(count$n)
+
+```
+
+#### B1. Disaggregate within and between subject effects:  
+Between-subjects effect: **P2.mean**  
+Within-subjects effect: **P2.meancent.scale** 
+```{r}
+# just include within and between
+b1 = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = dat) 
+# Electrode is not included as random variable because everything has been centered by electrode 
+# (i.e. it doesn't contribute any variance)
+
+sum.b1 = summary(b1)
+sum.b1$call
+sum.b1$varcor
+table = round(sum.b1$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+```
+
+**With effect-coded predictors included:**  
+``` {r}
+# Effect code
+dat$Race.e = -1
+dat$Race.e[dat$Race == "White"] = 1
+
+dat$Fix.e = -1
+dat$Fix.e[dat$Fix == "forehead"] = 1
+
+# include condition predictors
+b1.b = lmer(RT ~ P2.mean+P2.meancent.scale*Race.e*Fix.e + (1|Subject), data = dat)
+
+sum.b1b = summary(b1.b)
+sum.b1b$call
+sum.b1b$varcor
+table = round(sum.b1b$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+# just black trials
+b1.c = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(dat, Race == "Black"))
+sum.b1c = summary(b1.c)
+
+# just white trials
+b1.d = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(dat, Race == "White"))
+sum.b1d = summary(b1.d)
+
+# just eye trials
+b1.e = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(dat, Fix == "eyes"))
+sum.b1e = summary(b1.e)
+
+# just forehead trials
+b1.f = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(dat, Fix == "forehead"))
+sum.b1f = summary(b1.f)
+
+
+```
+The within-subject effect for Black trials is `r round(sum.b1c$coefficients[3], digits = 2)`. The within-subject effect for White trials is `r round(sum.b1d$coefficients[3], digits = 2)`.  
+
+The within-subject effect for eyes trials is `r round(sum.b1e$coefficients[3], digits = 2)`. The within-subject effect for forehead trials is `r round(sum.b1f$coefficients[3], digits = 2)`.
+
+
+
+#### B2. Test within-subject relationship by trial type
+
+``` {r fig.align="center"}
+# Dummy code
+dat$Race.d = 0
+dat$Race.d[dat$Race == "White"] = 1
+
+dat$Fix.d = 0
+dat$Fix.d[dat$Fix == "forehead"] = 1
+
+# fit model to plot simple slopes
+plot2.d = lmer(RT ~ P2.meancent.scale*Race.d*Fix.d + (1|Subject), data = dat)
+
+parms <- fixef(plot2.d) # fixed parameters from model
+vcmat <- vcov(plot2.d) # variance/covariance matrix of fixed effects
+
+# First calculate slopes
+
+## each row of this matrix defines entries of parms that we want to combine:
+STmat <- matrix(NA,4,8)
+STmat[1,] <- c(0,1,rep(0,2),0,0,0,0) # slope for Race = 0, Fix = 0
+STmat[2,] <- c(0,1,rep(0,2),0,1,0,0) # slope for Race = 0, Fix = 1
+STmat[3,] <- c(0,1,rep(0,2),1,0,0,0) # slope for Race = 1, Fix = 0
+STmat[4,] <- c(0,1,rep(0,2),1,1,0,1) # slope for Race = 1, Fix = 1
+
+Sparest <- STmat %*% parms          # see above for notation
+newvc <- STmat %*% vcmat %*% t(STmat)
+ses <- sqrt(diag(newvc))
+
+slopes = cbind(Sparest, ses) %>% as.data.frame()
+names(slopes) = c("est", "ses")
+
+# to calculate 95% CI intervals, lower bound = m - 2*SE, upper bound = m + 2*SE
+slopes$lbnd = slopes$est - 2*slopes$ses
+slopes$ubnd = slopes$est + 2*slopes$ses
+
+# Next calculate intercepts
+
+## each row of this matrix defines entries of parms that we want to combine:
+ITmat <- matrix(NA,4,8)
+ITmat[1,] <- c(1,0,0,0,0,0,0,0) # intercept for Race = 0, Fix = 0
+ITmat[2,] <- c(1,0,0,1,0,0,0,0) # intercept for Race = 0, Fix = 1
+ITmat[3,] <- c(1,0,1,0,0,0,0,0) # intercept for Race = 1, Fix = 0
+ITmat[4,] <- c(1,0,1,1,0,0,1,0) # intercept for Race = 1, Fix = 1
+
+Iparest <- ITmat %*% parms          # see above for notation
+
+forPlotting = cbind(Iparest, slopes[c(1,3:4)]) %>% as.data.frame()
+names(forPlotting) = c("Intercept", "Slope", "lower_95CI", "upper_95CI")
+
+# label for understanding
+forPlotting$Target_Race = c(rep("Black",2), rep("White",2))
+forPlotting$Fix = rep(c("eyes", "forehead"),2)
+forPlotting$Condition = paste(forPlotting$Target_Race, forPlotting$Fix, sep="_")
+
+custom = c("dodgerblue", "blue", "red", "red4")
+# BINGO -------------------------------------------------------------------
+pmain = 
+  ggplot(dat, aes(P2.meancent.scale, RT, alpha = Condition, color = Condition, shape = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  # geom_ribbon(aes(ymin=lower, ymax=upper, x = Trial, fill = Condition),
+  #             linetype = "dotted",
+  #             alpha = .25,
+  #             color = rep(custom, each=256),
+  #             fill = rep(custom, each=256)) +
+  labs(x = "P2 amplitude", y = "Reaction time") +
+  # scale_shape_manual(values=c(1,19,1,19)) +
+  # scale_alpha_manual(values=c(.1,.1,.1,.1)) +
+  #scale_color_manual(values=custom) +
+  theme_bw() +
+  fill_palette("jco")+
+  scale_y_continuous(limits=c(250, 650), expand=c(0,0)) +
+  scale_x_continuous(limits=c(-2,2),expand=c(0,0)) +
+  theme(plot.title = element_text(hjust = 0.5),# center title
+        axis.title = element_text(size = 20),
+        axis.text.y = element_text(size = 16),
+        axis.text.x = element_text(size = 12),
+        #legend.title = element_text(size = 20),
+        #legend.text = element_text(size = 16),
+        strip.text = element_text(size = 16)) 
+
+# Marginal density plot of x (top panel) and y (right panel)
+
+dat$Condition = paste(dat$Race, dat$Fix, sep="_")
+
+# Marginal densities along x axis
+xdens <- axis_canvas(pmain, axis = "x")+
+  geom_density(data = dat, aes(x = P2.meancent.scale, fill = Condition),
+              alpha = 0.7, size = 0.2)
+# Marginal densities along y axis
+# Need to set coord_flip = TRUE, if you plan to use coord_flip()
+ydens <- axis_canvas(pmain, axis = "y", coord_flip = TRUE)+
+  geom_density(data = dat, aes(x = RT, fill = Condition),
+                alpha = 0.7, size = 0.2)+
+  coord_flip()
+p1 <- insert_xaxis_grob(pmain, xdens, grid::unit(.2, "null"), position = "top")
+p2<- insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
+allPs = ggdraw(p2)
+
+allPs
+
+table = cbind(forPlotting[,5:6],
+              round(forPlotting$Intercept, digits=0), 
+              round(forPlotting$Slope, digits=2),
+              round(forPlotting$lower_95CI, digits=2),
+              round(forPlotting$upper_95CI, digits=2))
+names(table) = c("Target_Race", "Fix", "Intercept", "Slope", "Lower_95%CI", "Upper_95%CI")
+kable(table) %>% 
+  kable_styling(bootstrap_options = c("condensed"), full_width = F, position = "center") %>%
+  row_spec(which(table[,2] == "eyes"), background = "#DCDCDC")
+
+```
+**Zoomed in:**
+
+``` {r fig.align="center"}
+# Zoom in, add SEs
+
+# since P2 amp is continuous, don't have discrete values like Trial (in N170 and ERN examples)
+# Try with 9 levels of P2 amp (-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+
+SETmat <- matrix(NA,36,8) # 36 rows because 9 levels of x variable x 4 conditions, 8 columns because 8 levels of predictors in vcmat
+# fill columns with appropriate weights (columns correspond to order model is specified, i.e., order of predictors in output of model)
+
+P2levels = c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+# weights for intercept
+SETmat[,1] = 1 
+# weights for P2.meancent.scale
+SETmat[,2] = rep(P2levels, 4) # 9 levels of continuous variable of P2.meancent.scale, repeated 4 times because 4 conditions
+# weights for Race main effect
+SETmat[,3] = rep(c(0, 0, 1, 1), each = 9) # race = 0 for first two conditions, race = 1 for second two conditions
+# weights for Fix main effect
+SETmat[,4] = rep(c(0, 1, 0, 1), each = 9) # fix = 0 for first and third conditions, fix = 0 for second and fourth conditions
+# weights for P2 x Race condition
+SETmat[,5] = c(rep(c(0, 0), each = 9), P2levels, P2levels) 
+# weights for P2 x Fix condition
+SETmat[,6] = c(rep(0,9), P2levels, rep(0,9), P2levels) 
+# weights for Race x Fix condition
+SETmat[,7] = rep(c(0, 0, 0, 1), each = 9) 
+# weights for 3 way interaction
+SETmat[,8] = c(rep(c(0, 0, 0), each = 9), P2levels)
+
+newvc <- SETmat %*% vcmat %*% t(SETmat)
+ses <- sqrt(diag(newvc)) # long string of SEs for each level of P2 amp, first 9 are for Black-eyes, second 9 are for Black-forehead, third 9 are for White-eyes, fourth 9 are for White-forehead
+
+
+SE.dat = data.frame(Race = rep(c("Black", "White"), each=18), 
+                    Fix = rep(c("eyes", "forehead"), each = 9),
+                    P2.meancent.scale = rep(c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1), 4),
+                    SE = ses)
+SE.dat$Condition = paste(SE.dat$Race, SE.dat$Fix, sep="_")
+
+# Add in point data
+SE.dat$Point = NA
+for (c in c("Black_eyes", "Black_forehead", "White_eyes", "White_forehead")) {
+  forPlottingtemp = forPlotting[forPlotting$Condition == c,]
+  SE.dat$Point[SE.dat$Condition == c] = 
+    forPlottingtemp$Intercept + P2levels*forPlottingtemp$Slope
+}
+
+# calculate upper and lower bound (+/- 1 SE)
+SE.dat$upper = SE.dat$Point + SE.dat$SE
+SE.dat$lower = SE.dat$Point - SE.dat$SE
+
+# set elements of plots --------------------------------------------------------------------------
+zoom.ribbon = geom_ribbon(aes(ymin=lower, ymax=upper, x = P2.meancent.scale),
+                          linetype = "dotted",
+                          alpha = .1)
+zoom.labs = labs(x = "P2 amplitude", y = "Reaction time")
+
+zoom.theme = theme(plot.title = element_text(hjust = 0.5, size = 20),# center title
+                   axis.title = element_text(size = 20),
+                   axis.text.y = element_text(size = 16),
+                   axis.text.x = element_text(size = 12),
+                   #legend.title = element_text(size = 20),
+                   #legend.text = element_text(size = 16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   strip.text = element_text(size = 16))
+zoom.scalex = scale_x_continuous(limits=c(-1,1),expand=c(0,0))
+zoom.scaley = scale_y_continuous(limits=c(415, 495), expand=c(0,0))
+zoom.color.male = scale_color_manual(values=c("brown1", "darkgoldenrod1", "blueviolet", "mediumorchid1"))
+
+zoom.allPs.malefaces = 
+  ggplot(SE.dat, aes(Point, P2.meancent.scale, color = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  ggtitle("All participants") +
+  zoom.ribbon +
+  zoom.labs +
+  zoom.scalex +
+  zoom.scaley +
+  theme_bw() +
+  zoom.theme +
+  zoom.color.male
+
+zoom.allPs.malefaces.nolegend = 
+  zoom.allPs.malefaces + 
+  theme(legend.position="none")
+
+# display
+zoom.allPs.malefaces
+  
+ggsave("./Figures/RaceTask_allPs_malefaces.tiff", zoom.allPs.malefaces.nolegend, height = 6, width = 4, units = "in")
+```

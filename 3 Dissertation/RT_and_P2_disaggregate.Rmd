@@ -1,0 +1,601 @@
+---
+title: "Dissertation: Disaggregate analyses for P2->RT"
+author: "Hannah"
+date: "8/15/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      out.width = "50%", # shrinks images by half when knitted to html
+                      out.height = "50%")
+library(lme4)
+library(lmerTest)
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(ggpubr)
+library(cowplot)
+library(kableExtra)
+
+
+dat = read.delim("AllSubs_bothTasks_acceptedTrials_long_nobs_nobe_withRT_meancenteredP2.txt")
+
+# Effect code
+dat$Race.e = -1
+dat$Race.e[dat$TarRace == "White"] = 1
+
+dat$Gen.e = -1
+dat$Gen.e[dat$TarGender == "Male"] = 1
+
+# Dummy code
+dat$Race.d = 0
+dat$Race.d[dat$TarRace == "White"] = 1
+
+dat$Gen.d = 0
+dat$Gen.d[dat$TarGender == "Male"] = 1
+
+# separate by task
+racedat = filter(dat, Task == "RaceTask")
+gendat = filter(dat, Task == "GenTask")
+
+# check main effect of race on P2 amplitude to check direction of effect
+m1 = lmer(meanAmp ~ Race.e + (Race.e|Subject) + (1|Electrode), data = racedat)
+m2 = lmer(meanAmp ~ Race.e + (Race.e|Subject) + (1|Electrode), data = gendat)
+
+select(racedat, meanAmp, TarRace) %>% 
+  group_by(TarRace) %>% 
+  summarize_all(list(mean=mean))
+
+select(gendat, meanAmp, TarRace) %>% 
+  group_by(TarRace) %>% 
+  summarize_all(list(mean=mean))
+
+
+```
+
+```{r eval = F}
+# calculate median number of trials per sub in each condition
+dat$Condition = paste(dat$TarRace, dat$TarGender, sep="_")
+
+count = filter(dat, Electrode == "CZ") %>% 
+  count(Subject, Condition, Task) %>% 
+  as.data.frame()
+
+# Race task
+median(count$n[count$Task == "RaceTask"])
+max(count$n[count$Task == "RaceTask"])
+min(count$n[count$Task == "RaceTask"])
+
+# Gender task
+median(count$n[count$Task == "GenTask"])
+max(count$n[count$Task == "GenTask"])
+min(count$n[count$Task == "GenTask"])
+
+```
+## 1. Dissaggregate analyses predicting RT from P2 amplitude  
+The P2.meancent.scale variable was standardized by subject and electrode (i.e., centered around the subject/electrode mean and then scaled to have a standard deviation of 1).  
+
+DV is trial level RT. Incorrect trials and trials with +/- 75 uV artifacts are excluded. Subjects with < 50% trials accepted are excluded (subs 36, 52, and 69). Sub 60 doesn't have data for gender task
+
+P2.submean = subject mean (separate subject mean for each electrode)  
+P2.meancent.scale = trial level P2 amplitude centered around subject/electrode mean 
+
+Included n = 65
+
+### A. Race categorization task
+
+#### A1. Disaggregate within and between subject effects:  
+Between-subjects effect: **P2.submean**  
+Within-subjects effect: **P2.meancent.scale** 
+```{r}
+# just include within and between
+b1 = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = racedat) 
+# Electrode is not included as random variable because everything has been centered by electrode 
+# (i.e. it doesn't contribute any variance)
+
+sum.b1 = summary(b1)
+sum.b1$call
+sum.b1$varcor
+table = round(sum.b1$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+```
+
+**With effect-coded predictors included:**  
+``` {r}
+
+# include condition predictors
+b1.b = lmer(RT ~ P2.submean+P2.meancent.scale*Race.e*Gen.e + (1|Subject), data = racedat)
+
+sum.b1b = summary(b1.b)
+sum.b1b$call
+sum.b1b$varcor
+table = round(sum.b1b$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+# just black trials
+b1.c = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(racedat, TarRace == "Black"))
+sum.b1c = summary(b1.c)
+
+# just white trials
+b1.d = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(racedat, TarRace == "White"))
+sum.b1d = summary(b1.d)
+
+# just female trials
+b1.e = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(racedat, TarGender == "Female"))
+sum.b1e = summary(b1.e)
+
+# just male trials
+b1.f = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(racedat, TarGender == "Male"))
+sum.b1f = summary(b1.f)
+
+
+```
+The within-subject effect for Black trials is `r round(sum.b1c$coefficients[3], digits = 2)`. The within-subject effect for White trials is `r round(sum.b1d$coefficients[3], digits = 2)`.  
+
+The within-subject effect for Female trials is `r round(sum.b1e$coefficients[3], digits = 2)`. The within-subject effect for Male trials is `r round(sum.b1f$coefficients[3], digits = 2)`.
+
+
+
+#### A2. Test within-subject relationship by trial type
+
+``` {r fig.align="center"}
+
+# fit model to plot simple slopes
+plot2.d = lmer(RT ~ P2.meancent.scale*Race.d*Gen.d + (1|Subject), data = racedat)
+
+parms <- fixef(plot2.d) # fixed parameters from model
+vcmat <- vcov(plot2.d) # variance/covariance matrix of fixed effects
+
+# First calculate slopes
+
+## each row of this matrix defines entries of parms that we want to combine:
+STmat <- matrix(NA,4,8)
+STmat[1,] <- c(0,1,rep(0,2),0,0,0,0) # slope for Race = 0, Gen = 0
+STmat[2,] <- c(0,1,rep(0,2),0,1,0,0) # slope for Race = 0, Gen = 1
+STmat[3,] <- c(0,1,rep(0,2),1,0,0,0) # slope for Race = 1, Gen = 0
+STmat[4,] <- c(0,1,rep(0,2),1,1,0,1) # slope for Race = 1, Gen = 1
+
+Sparest <- STmat %*% parms          # see above for notation
+newvc <- STmat %*% vcmat %*% t(STmat)
+ses <- sqrt(diag(newvc))
+
+slopes = cbind(Sparest, ses) %>% as.data.frame()
+names(slopes) = c("est", "ses")
+
+# to calculate 95% CI intervals, lower bound = m - 2*SE, upper bound = m + 2*SE
+slopes$lbnd = slopes$est - 2*slopes$ses
+slopes$ubnd = slopes$est + 2*slopes$ses
+
+# Next calculate intercepts
+
+## each row of this matrix defines entries of parms that we want to combine:
+ITmat <- matrix(NA,4,8)
+ITmat[1,] <- c(1,0,0,0,0,0,0,0) # intercept for Race = 0, Gen = 0
+ITmat[2,] <- c(1,0,0,1,0,0,0,0) # intercept for Race = 0, Gen = 1
+ITmat[3,] <- c(1,0,1,0,0,0,0,0) # intercept for Race = 1, Gen = 0
+ITmat[4,] <- c(1,0,1,1,0,0,1,0) # intercept for Race = 1, Gen = 1
+
+Iparest <- ITmat %*% parms          # see above for notation
+
+forPlotting = cbind(Iparest, slopes[c(1,3:4)]) %>% as.data.frame()
+names(forPlotting) = c("Intercept", "Slope", "lower_95CI", "upper_95CI")
+
+# label for understanding
+forPlotting$Target_Race = c(rep("Black",2), rep("White",2))
+forPlotting$Target_Gender = rep(c("female", "male"),2)
+forPlotting$Condition = paste(forPlotting$Target_Race, forPlotting$Target_Gender, sep="_")
+
+custom = c("dodgerblue", "blue", "red", "red4")
+# BINGO -------------------------------------------------------------------
+pmain = 
+  ggplot(racedat, aes(P2.meancent.scale, RT, alpha = Condition, color = Condition, shape = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  # geom_ribbon(aes(ymin=lower, ymax=upper, x = Trial, fill = Condition),
+  #             linetype = "dotted",
+  #             alpha = .25,
+  #             color = rep(custom, each=256),
+  #             fill = rep(custom, each=256)) +
+  labs(x = "P2 amplitude", y = "Reaction time") +
+  # scale_shape_manual(values=c(1,19,1,19)) +
+  # scale_alpha_manual(values=c(.1,.1,.1,.1)) +
+  #scale_color_manual(values=custom) +
+  theme_bw() +
+  fill_palette("jco")+
+  scale_y_continuous(limits=c(250, 650), expand=c(0,0)) +
+  scale_x_continuous(limits=c(-2,2),expand=c(0,0)) +
+  theme(plot.title = element_text(hjust = 0.5),# center title
+        axis.title = element_text(size = 20),
+        axis.text.y = element_text(size = 16),
+        axis.text.x = element_text(size = 12),
+        #legend.title = element_text(size = 20),
+        #legend.text = element_text(size = 16),
+        strip.text = element_text(size = 16)) 
+
+# Marginal density plot of x (top panel) and y (right panel)
+
+racedat$Condition = paste(racedat$TarRace, racedat$TarGen, sep="_")
+
+# Marginal densities along x axis
+xdens <- axis_canvas(pmain, axis = "x")+
+  geom_density(data = racedat, aes(x = P2.meancent.scale, fill = Condition),
+              alpha = 0.7, size = 0.2)
+# Marginal densities along y axis
+# Need to set coord_flip = TRUE, if you plan to use coord_flip()
+ydens <- axis_canvas(pmain, axis = "y", coord_flip = TRUE)+
+  geom_density(data = racedat, aes(x = RT, fill = Condition),
+                alpha = 0.7, size = 0.2)+
+  coord_flip()
+p1 <- insert_xaxis_grob(pmain, xdens, grid::unit(.2, "null"), position = "top")
+p2<- insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
+allPs = ggdraw(p2)
+
+allPs
+
+table = cbind(forPlotting[,5:6],
+              round(forPlotting$Intercept, digits=0), 
+              round(forPlotting$Slope, digits=2),
+              round(forPlotting$lower_95CI, digits=2),
+              round(forPlotting$upper_95CI, digits=2))
+names(table) = c("Target_Race", "Target_Gender", "Intercept", "Slope", "Lower_95%CI", "Upper_95%CI")
+kable(table) %>% 
+  kable_styling(bootstrap_options = c("condensed"), full_width = F, position = "center") %>%
+  row_spec(which(table[,2] == "eyes"), background = "#DCDCDC")
+
+```
+**Zoomed in:**
+
+``` {r fig.align="center"}
+# Zoom in, add SEs
+
+# since P2 amp is continuous, don't have discrete values like Trial (in N170 and ERN examples)
+# Try with 9 levels of P2 amp (-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+
+SETmat <- matrix(NA,36,8) # 36 rows because 9 levels of x variable x 4 conditions, 8 columns because 8 levels of predictors in vcmat
+# fill columns with appropriate weights (columns correspond to order model is specified, i.e., order of predictors in output of model)
+
+P2levels = c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+# weights for intercept
+SETmat[,1] = 1 
+# weights for P2.meancent.scale
+SETmat[,2] = rep(P2levels, 4) # 9 levels of continuous variable of P2.meancent.scale, repeated 4 times because 4 conditions
+# weights for Race main effect
+SETmat[,3] = rep(c(0, 0, 1, 1), each = 9) # race = 0 for first two conditions, race = 1 for second two conditions
+# weights for Fix main effect
+SETmat[,4] = rep(c(0, 1, 0, 1), each = 9) # fix = 0 for first and third conditions, fix = 0 for second and fourth conditions
+# weights for P2 x Race condition
+SETmat[,5] = c(rep(c(0, 0), each = 9), P2levels, P2levels) 
+# weights for P2 x Fix condition
+SETmat[,6] = c(rep(0,9), P2levels, rep(0,9), P2levels) 
+# weights for Race x Fix condition
+SETmat[,7] = rep(c(0, 0, 0, 1), each = 9) 
+# weights for 3 way interaction
+SETmat[,8] = c(rep(c(0, 0, 0), each = 9), P2levels)
+
+newvc <- SETmat %*% vcmat %*% t(SETmat)
+ses <- sqrt(diag(newvc)) # long string of SEs for each level of P2 amp, first 9 are for Black-female, second 9 are for Black-male, third 9 are for White-female, fourth 9 are for White-male
+
+
+SE.dat = data.frame(Race = rep(c("Black", "White"), each=18), 
+                    Fix = rep(c("female", "male"), each = 9),
+                    P2.meancent.scale = rep(c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1), 4),
+                    SE = ses)
+SE.dat$Condition = paste(SE.dat$Race, SE.dat$Fix, sep="_")
+
+# Add in point data
+SE.dat$Point = NA
+for (c in c("Black_female", "Black_male", "White_female", "White_male")) {
+  forPlottingtemp = forPlotting[forPlotting$Condition == c,]
+  SE.dat$Point[SE.dat$Condition == c] = 
+    forPlottingtemp$Intercept + P2levels*forPlottingtemp$Slope
+}
+
+# calculate upper and lower bound (+/- 1 SE)
+SE.dat$upper = SE.dat$Point + SE.dat$SE
+SE.dat$lower = SE.dat$Point - SE.dat$SE
+
+# set elements of plots --------------------------------------------------------------------------
+zoom.ribbon = geom_ribbon(aes(ymin=lower, ymax=upper, x = P2.meancent.scale),
+                          linetype = "dotted",
+                          alpha = .1)
+zoom.labs = labs(x = "P2 amplitude", y = "Reaction time")
+
+zoom.theme = theme(plot.title = element_text(hjust = 0.5, size = 20),# center title
+                   axis.title = element_text(size = 20),
+                   axis.text.y = element_text(size = 16),
+                   axis.text.x = element_text(size = 12),
+                   #legend.title = element_text(size = 20),
+                   #legend.text = element_text(size = 16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   strip.text = element_text(size = 16))
+zoom.scalex = scale_x_continuous(limits=c(-1,1),expand=c(0,0))
+zoom.scaley = scale_y_continuous(limits=c(400, 485), expand=c(0,0))
+zoom.color = scale_color_manual(values=c("brown1", "darkgoldenrod1", "blueviolet", "mediumorchid1"))
+
+zoom.allPs = 
+  ggplot(SE.dat, aes(Point, P2.meancent.scale, color = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  ggtitle("Race categorization task") +
+  zoom.ribbon +
+  zoom.labs +
+  zoom.scalex +
+  zoom.scaley +
+  theme_bw() +
+  zoom.theme +
+  zoom.color
+
+zoom.allPsnolegend = 
+  zoom.allPs + 
+  theme(legend.position="none")
+
+# display
+zoom.allPs
+  
+ggsave("./Figures/RaceTask_allPs.tiff", zoom.allPs, height = 5, width = 5, units = "in")
+```
+
+
+
+### B. Gender categorization task
+
+#### B1. Disaggregate within and between subject effects:  
+Between-subjects effect: **P2.submean**  
+Within-subjects effect: **P2.meancent.scale** 
+```{r}
+# just include within and between
+b1 = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = gendat) 
+# Electrode is not included as random variable because everything has been centered by electrode 
+# (i.e. it doesn't contribute any variance)
+
+sum.b1 = summary(b1)
+sum.b1$call
+sum.b1$varcor
+table = round(sum.b1$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+```
+
+**With effect-coded predictors included:**  
+``` {r}
+
+# include condition predictors
+b1.b = lmer(RT ~ P2.submean+P2.meancent.scale*Race.e*Gen.e + (1|Subject), data = gendat)
+
+sum.b1b = summary(b1.b)
+sum.b1b$call
+sum.b1b$varcor
+table = round(sum.b1b$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
+
+# just black trials
+b1.c = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(gendat, TarRace == "Black"))
+sum.b1c = summary(b1.c)
+
+# just white trials
+b1.d = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(gendat, TarRace == "White"))
+sum.b1d = summary(b1.d)
+
+# just female trials
+b1.e = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(gendat, TarGender == "Female"))
+sum.b1e = summary(b1.e)
+
+# just male trials
+b1.f = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = filter(gendat, TarGender == "Male"))
+sum.b1f = summary(b1.f)
+
+
+```
+The within-subject effect for Black trials is `r round(sum.b1c$coefficients[3], digits = 2)`. The within-subject effect for White trials is `r round(sum.b1d$coefficients[3], digits = 2)`.  
+
+The within-subject effect for Female trials is `r round(sum.b1e$coefficients[3], digits = 2)`. The within-subject effect for Male trials is `r round(sum.b1f$coefficients[3], digits = 2)`.
+
+
+
+#### B2. Test within-subject relationship by trial type
+
+``` {r fig.align="center"}
+
+# fit model to plot simple slopes
+plot2.d = lmer(RT ~ P2.meancent.scale*Race.d*Gen.d + (1|Subject), data = gendat)
+
+parms <- fixef(plot2.d) # fixed parameters from model
+vcmat <- vcov(plot2.d) # variance/covariance matrix of fixed effects
+
+# First calculate slopes
+
+## each row of this matrix defines entries of parms that we want to combine:
+STmat <- matrix(NA,4,8)
+STmat[1,] <- c(0,1,rep(0,2),0,0,0,0) # slope for Race = 0, Gen = 0
+STmat[2,] <- c(0,1,rep(0,2),0,1,0,0) # slope for Race = 0, Gen = 1
+STmat[3,] <- c(0,1,rep(0,2),1,0,0,0) # slope for Race = 1, Gen = 0
+STmat[4,] <- c(0,1,rep(0,2),1,1,0,1) # slope for Race = 1, Gen = 1
+
+Sparest <- STmat %*% parms          # see above for notation
+newvc <- STmat %*% vcmat %*% t(STmat)
+ses <- sqrt(diag(newvc))
+
+slopes = cbind(Sparest, ses) %>% as.data.frame()
+names(slopes) = c("est", "ses")
+
+# to calculate 95% CI intervals, lower bound = m - 2*SE, upper bound = m + 2*SE
+slopes$lbnd = slopes$est - 2*slopes$ses
+slopes$ubnd = slopes$est + 2*slopes$ses
+
+# Next calculate intercepts
+
+## each row of this matrix defines entries of parms that we want to combine:
+ITmat <- matrix(NA,4,8)
+ITmat[1,] <- c(1,0,0,0,0,0,0,0) # intercept for Race = 0, Gen = 0
+ITmat[2,] <- c(1,0,0,1,0,0,0,0) # intercept for Race = 0, Gen = 1
+ITmat[3,] <- c(1,0,1,0,0,0,0,0) # intercept for Race = 1, Gen = 0
+ITmat[4,] <- c(1,0,1,1,0,0,1,0) # intercept for Race = 1, Gen = 1
+
+Iparest <- ITmat %*% parms          # see above for notation
+
+forPlotting = cbind(Iparest, slopes[c(1,3:4)]) %>% as.data.frame()
+names(forPlotting) = c("Intercept", "Slope", "lower_95CI", "upper_95CI")
+
+# label for understanding
+forPlotting$Target_Race = c(rep("Black",2), rep("White",2))
+forPlotting$Target_Gender = rep(c("female", "male"),2)
+forPlotting$Condition = paste(forPlotting$Target_Race, forPlotting$Target_Gender, sep="_")
+
+custom = c("dodgerblue", "blue", "red", "red4")
+# BINGO -------------------------------------------------------------------
+pmain = 
+  ggplot(gendat, aes(P2.meancent.scale, RT, alpha = Condition, color = Condition, shape = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  # geom_ribbon(aes(ymin=lower, ymax=upper, x = Trial, fill = Condition),
+  #             linetype = "dotted",
+  #             alpha = .25,
+  #             color = rep(custom, each=256),
+  #             fill = rep(custom, each=256)) +
+  labs(x = "P2 amplitude", y = "Reaction time") +
+  # scale_shape_manual(values=c(1,19,1,19)) +
+  # scale_alpha_manual(values=c(.1,.1,.1,.1)) +
+  #scale_color_manual(values=custom) +
+  theme_bw() +
+  fill_palette("jco")+
+  scale_y_continuous(limits=c(250, 650), expand=c(0,0)) +
+  scale_x_continuous(limits=c(-2,2),expand=c(0,0)) +
+  theme(plot.title = element_text(hjust = 0.5),# center title
+        axis.title = element_text(size = 20),
+        axis.text.y = element_text(size = 16),
+        axis.text.x = element_text(size = 12),
+        #legend.title = element_text(size = 20),
+        #legend.text = element_text(size = 16),
+        strip.text = element_text(size = 16)) 
+
+# Marginal density plot of x (top panel) and y (right panel)
+
+gendat$Condition = paste(gendat$TarRace, gendat$TarGen, sep="_")
+
+# Marginal densities along x axis
+xdens <- axis_canvas(pmain, axis = "x")+
+  geom_density(data = gendat, aes(x = P2.meancent.scale, fill = Condition),
+              alpha = 0.7, size = 0.2)
+# Marginal densities along y axis
+# Need to set coord_flip = TRUE, if you plan to use coord_flip()
+ydens <- axis_canvas(pmain, axis = "y", coord_flip = TRUE)+
+  geom_density(data = gendat, aes(x = RT, fill = Condition),
+                alpha = 0.7, size = 0.2)+
+  coord_flip()
+p1 <- insert_xaxis_grob(pmain, xdens, grid::unit(.2, "null"), position = "top")
+p2<- insert_yaxis_grob(p1, ydens, grid::unit(.2, "null"), position = "right")
+allPs = ggdraw(p2)
+
+allPs
+
+table = cbind(forPlotting[,5:6],
+              round(forPlotting$Intercept, digits=0), 
+              round(forPlotting$Slope, digits=2),
+              round(forPlotting$lower_95CI, digits=2),
+              round(forPlotting$upper_95CI, digits=2))
+names(table) = c("Target_Race", "Target_Gender", "Intercept", "Slope", "Lower_95%CI", "Upper_95%CI")
+kable(table) %>% 
+  kable_styling(bootstrap_options = c("condensed"), full_width = F, position = "center") %>%
+  row_spec(which(table[,2] == "eyes"), background = "#DCDCDC")
+
+```
+**Zoomed in:**
+
+``` {r fig.align="center"}
+# Zoom in, add SEs
+
+# since P2 amp is continuous, don't have discrete values like Trial (in N170 and ERN examples)
+# Try with 9 levels of P2 amp (-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+
+SETmat <- matrix(NA,36,8) # 36 rows because 9 levels of x variable x 4 conditions, 8 columns because 8 levels of predictors in vcmat
+# fill columns with appropriate weights (columns correspond to order model is specified, i.e., order of predictors in output of model)
+
+P2levels = c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1)
+# weights for intercept
+SETmat[,1] = 1 
+# weights for P2.meancent.scale
+SETmat[,2] = rep(P2levels, 4) # 9 levels of continuous variable of P2.meancent.scale, repeated 4 times because 4 conditions
+# weights for Race main effect
+SETmat[,3] = rep(c(0, 0, 1, 1), each = 9) # race = 0 for first two conditions, race = 1 for second two conditions
+# weights for Fix main effect
+SETmat[,4] = rep(c(0, 1, 0, 1), each = 9) # fix = 0 for first and third conditions, fix = 0 for second and fourth conditions
+# weights for P2 x Race condition
+SETmat[,5] = c(rep(c(0, 0), each = 9), P2levels, P2levels) 
+# weights for P2 x Fix condition
+SETmat[,6] = c(rep(0,9), P2levels, rep(0,9), P2levels) 
+# weights for Race x Fix condition
+SETmat[,7] = rep(c(0, 0, 0, 1), each = 9) 
+# weights for 3 way interaction
+SETmat[,8] = c(rep(c(0, 0, 0), each = 9), P2levels)
+
+newvc <- SETmat %*% vcmat %*% t(SETmat)
+ses <- sqrt(diag(newvc)) # long string of SEs for each level of P2 amp, first 9 are for Black-female, second 9 are for Black-male, third 9 are for White-female, fourth 9 are for White-male
+
+
+SE.dat = data.frame(Race = rep(c("Black", "White"), each=18), 
+                    Fix = rep(c("female", "male"), each = 9),
+                    P2.meancent.scale = rep(c(-1, -.75, -.5, -.25, 0, .25, .50, .75, 1), 4),
+                    SE = ses)
+SE.dat$Condition = paste(SE.dat$Race, SE.dat$Fix, sep="_")
+
+# Add in point data
+SE.dat$Point = NA
+for (c in c("Black_female", "Black_male", "White_female", "White_male")) {
+  forPlottingtemp = forPlotting[forPlotting$Condition == c,]
+  SE.dat$Point[SE.dat$Condition == c] = 
+    forPlottingtemp$Intercept + P2levels*forPlottingtemp$Slope
+}
+
+# calculate upper and lower bound (+/- 1 SE)
+SE.dat$upper = SE.dat$Point + SE.dat$SE
+SE.dat$lower = SE.dat$Point - SE.dat$SE
+
+# set elements of plots --------------------------------------------------------------------------
+zoom.ribbon = geom_ribbon(aes(ymin=lower, ymax=upper, x = P2.meancent.scale),
+                          linetype = "dotted",
+                          alpha = .1)
+zoom.labs = labs(x = "P2 amplitude", y = "Reaction time")
+
+zoom.theme = theme(plot.title = element_text(hjust = 0.5, size = 20),# center title
+                   axis.title = element_text(size = 20),
+                   axis.text.y = element_text(size = 16),
+                   axis.text.x = element_text(size = 12),
+                   #legend.title = element_text(size = 20),
+                   #legend.text = element_text(size = 16),
+                   panel.grid.major = element_blank(),
+                   panel.grid.minor = element_blank(),
+                   strip.text = element_text(size = 16))
+zoom.scalex = scale_x_continuous(limits=c(-1,1),expand=c(0,0))
+zoom.scaley = scale_y_continuous(limits=c(400, 485), expand=c(0,0))
+zoom.color = scale_color_manual(values=c("brown1", "darkgoldenrod1", "blueviolet", "mediumorchid1"))
+
+zoom.allPs = 
+  ggplot(SE.dat, aes(Point, P2.meancent.scale, color = Condition)) +
+  geom_abline(data = forPlotting, aes(intercept=Intercept, slope=Slope, color = Condition), size=1)+
+  ggtitle("Gender categorization task") +
+  zoom.ribbon +
+  zoom.labs +
+  zoom.scalex +
+  zoom.scaley +
+  theme_bw() +
+  zoom.theme +
+  zoom.color
+
+zoom.allPsnolegend = 
+  zoom.allPs + 
+  theme(legend.position="none")
+
+# display
+zoom.allPs
+  
+ggsave("./Figures/GenderTask_allPs.tiff", zoom.allPs, height = 5, width = 5, units = "in")
+```
