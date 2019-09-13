@@ -142,46 +142,67 @@ Diss = read.delim("./3 Dissertation/AllSubs_bothTasks_acceptedTrials_long_nobs_n
 Diss_racetask = filter(Diss, Task == "RaceTask")
 Diss_gentask = filter(Diss, Task == "GenTask")
 
+# RT
+
 # Race Task
+win.metafile("./4 Figures/Study3_RT_RaceTask_bar.wmf")
 
 ggplot(Diss_racetask, aes(TarRace, RT, fill = TarGender)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
   labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
   theme_hve() +
-  coord_cartesian(ylim = c(400, 500)) +
-  ggtitle("Race task")
+  coord_cartesian(ylim = c(410, 510)) +
+  theme(legend.position = "bottom") 
 
-ggplot(Diss_racetask, aes(TarRace, meanAmp, fill = TarGender)) +
-  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "P2 amplitude", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
-  theme_hve() +
-  #  coord_cartesian(ylim = c(400, 500)) +
-  ggtitle("Race task")
+dev.off()
 
 # Gen Task
+win.metafile("./4 Figures/Study3_RT_GenTask_bar.wmf")
 
 ggplot(Diss_gentask, aes(TarRace, RT, fill = TarGender)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
   labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Target Gender")) +
   theme_hve() +
-  coord_cartesian(ylim = c(400, 500)) +
-  ggtitle("Race task")
+  coord_cartesian(ylim = c(410, 510)) +
+  theme(legend.position = "bottom") 
 
-ggplot(Diss_gentask, aes(TarRace, meanAmp, fill = TarGender)) +
-  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
-  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "P2 amplitude", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+dev.off()
+
+# P2
+
+# Race Task
+win.metafile("./4 Figures/Study3_P2_RaceTask_point.wmf")
+
+ggplot(Diss_racetask, aes(TarRace, meanAmp, fill = TarGender, shape = TarGender)) +
+  stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
+  scale_shape_manual(values=c(1, 16)) +
   theme_hve() +
-  #  coord_cartesian(ylim = c(400, 500)) +
-  ggtitle("Race task")
+  theme(legend.position = "bottom") +
+  scale_y_continuous(position = "right") +
+  coord_cartesian(ylim = c(1, 5)) +
+  theme(axis.title = element_text(color = "blue"),
+        axis.text = element_text(color = "blue"))
 
+dev.off()
 
+# Race Task
+win.metafile("./4 Figures/Study3_P2_GenTask_point.wmf")
 
-temp = ERPfix[ERPfix$Electrode %in% c("CZ", "CPZ", "PZ"),c(1:4,6)]
+ggplot(Diss_gentask, aes(TarRace, meanAmp, fill = TarGender, shape = TarGender)) +
+  stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
+  scale_shape_manual(values=c(1, 16)) +
+  theme_hve() +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(position = "right") +
+  coord_cartesian(ylim = c(1, 5)) +
+  theme(axis.title = element_text(color = "blue"),
+        axis.text = element_text(color = "blue"))
+
+dev.off()
+
