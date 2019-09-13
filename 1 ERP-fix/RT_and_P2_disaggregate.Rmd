@@ -15,6 +15,7 @@ library(lmerTest)
 library(dplyr)
 library(knitr)
 library(ggplot2)
+library(MuMIn)
 library(ggpubr)
 library(cowplot)
 library(kableExtra)
@@ -66,6 +67,11 @@ kable(table) %>%
   kable_styling(full_width = F, position = "center") %>% 
   row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
 
+# calculate effect size
+full = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = dat)  %>% r.squaredGLMM()
+reduced = lmer(RT ~ P2.mean + (1|Subject), data = dat)  %>% r.squaredGLMM() 
+
+effect.size = (full[2] - reduced[2])/(1-full[2])
 ```
 
 **With effect-coded predictors included:**  

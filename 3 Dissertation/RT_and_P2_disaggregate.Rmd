@@ -103,6 +103,12 @@ kable(table) %>%
   kable_styling(full_width = F, position = "center") %>% 
   row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
 
+# calculate effect size
+full = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = racedat)   %>% r.squaredGLMM()
+reduced = lmer(RT ~ P2.submean + (1|Subject), data = racedat)   %>% r.squaredGLMM() 
+
+effect.size = (full[2] - reduced[2])/(1-full[2])
+
 ```
 
 **With effect-coded predictors included:**  
@@ -362,6 +368,11 @@ kable(table) %>%
   kable_styling(full_width = F, position = "center") %>% 
   row_spec(which(table[,5] < .05), bold = T, background = "#FFFF66")
 
+# calculate effect size
+full = lmer(RT ~ P2.submean+P2.meancent.scale + (1|Subject), data = gendat)   %>% r.squaredGLMM()
+reduced = lmer(RT ~ P2.submean + (1|Subject), data = gendat)   %>% r.squaredGLMM() 
+
+effect.size = (full[2] - reduced[2])/(1-full[2])
 ```
 
 **With effect-coded predictors included:**  

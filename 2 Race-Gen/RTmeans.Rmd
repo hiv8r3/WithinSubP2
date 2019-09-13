@@ -44,8 +44,8 @@ gendat$Fix.e = -1
 gendat$Fix.e[gendat$Fix == "forehead"] = 1
 
 # model specification
-lmer(RT ~ 1 + (TarRace.e*TarGender.e*Fix.e|Subject), data = gendat) %>%  summary()
-lmer(RT ~ 1 + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat) %>%  summary() # use this
+# lmer(RT ~ 1 + (TarRace.e*TarGender.e*Fix.e|Subject), data = gendat) %>%  summary()
+# lmer(RT ~ 1 + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat) %>%  summary() # use this
 
 m1 = lmer(RT ~ TarRace.e*TarGender.e*Fix.e*ParRace.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat)
 
@@ -82,6 +82,8 @@ m1.w = lmer(RT ~ TarRace.e*TarGender.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subj
 
 m1.be = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, ParRace == "Black" & Fix == "eyes"))
 m1.bf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, ParRace == "Black" & Fix == "forehead"))
+
+m1.simple = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = gendat)
 
 ```
 
@@ -190,6 +192,8 @@ m2.wf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data 
 m2.be = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "Black" & Fix == "eyes"))
 m2.bf = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, ParRace == "Black" & Fix == "forehead"))
 
+
+m2.simple = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = racedat)
 ```
 
 
