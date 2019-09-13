@@ -167,3 +167,69 @@ ggplot(racetask, aes(Time, CPZ, group = Condition)) +
 
 ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_RaceTask_CPZ.jpg", width=9, height=8, units="in")
 
+# 3. Dissertation -------------------------------------------------------------
+
+# Read in data ------------------------------------------------------------
+
+dissdata = read.delim("4 Figures/Grand averages/3 Dissertation/BothTasks_grandaverages_noBS.txt")
+dissdata$Condition = paste(dissdata$TarRace, dissdata$TarGender, sep="_")
+
+# Plots  --------------------------------------
+condColorsDiss <- c("black_male" = "blueviolet",
+                    "black_female" = "darkgoldenrod2",
+                    "white_male" = "darkblue",
+                    "white_female" = "forestgreen")
+
+condLinetypeDiss <- c("black_male" = "solid",
+                      "black_female" = "solid",
+                      "white_male" = "solid",
+                      "white_female" = "solid")
+
+# CPZ (Gender Task)
+ggplot(dissdata[dissdata$Task == "GenTask",], aes(Time, CPZ_ind.avg_grand.avg, group = Condition)) + 
+  geom_line(lwd=1,aes(color = Condition, linetype = Condition)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 400), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
+  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") +
+  scale_color_manual(values=condColorsDiss) +
+  scale_linetype_manual(values=condLinetypeDiss)
+
+ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_GenderTask_CPZ.jpg", width=8, height=5, units="in")
+
+# CPZ (Race Task)
+ggplot(dissdata[dissdata$Task == "RaceTask",], aes(Time, CPZ_ind.avg_grand.avg, group = Condition)) + 
+  geom_line(lwd=1,aes(color = Condition, linetype = Condition)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 400), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
+  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") +
+  scale_color_manual(values=condColorsDiss) +
+  scale_linetype_manual(values=condLinetypeDiss)
+
+ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_RaceTask_CPZ.jpg", width=8, height=5, units="in")
+
