@@ -321,3 +321,37 @@ zoom.allPs.malefaces
   
 ggsave("./Figures/RaceTask_allPs_malefaces.tiff", zoom.allPs.malefaces.nolegend, height = 6, width = 4, units = "in")
 ```
+
+## 2. Examining between/within stimulus group effects
+
+To examine the P2->RT relationship within stimulus type and between stimulus type, I created two new variables.
+P2.withinSub.betweenStim = mean P2 for each stimulus type, centered within sub
+P2.withinSub.withinStim = trial level P2, centered within each stim type, centered within sub
+
+**Not calculated**
+``` {r, eval = F}
+dat$P2.withinSub.betweenStim = NULL
+dat$P2.withinSub.withinStim = NULL
+
+# create new variables
+for (i in unique(dat$Subject)) {
+  for (e in unique(dat$Electrode)) {
+    for (t in unique(dat$Condition)) {
+      # calculate mean
+      temp = dat[dat$Subject == i & dat$Electrode == e & dat$Condition == t,]
+      dat$P2.withinSub.betweenStim[dat$Subject == i & 
+                                     dat$Electrode == e &
+                                     dat$Condition == t] = mean(temp$P2.meancent)
+      
+      # calculate subject mean-centered variable
+      dat$P2.withinSub.withinStim = dat$P2.meancent - dat$P2.withinSub.betweenStim
+      
+      # scale subject mean-centered variable
+      dat$P2.withinSub.withinStim.scale = scale(dat$P2.withinSub.withinStim)
+    }
+  }
+}
+
+b5 = lmer(RT ~ P2.mean+P2.withinSub.withinStim+P2.withinSub.betweenStim + (1|Subject), data = dat)
+summary(b5)
+```

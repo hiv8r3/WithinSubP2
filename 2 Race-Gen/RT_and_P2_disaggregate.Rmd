@@ -77,6 +77,25 @@ effect.size = (full[2] - reduced[2])/(1-full[2])
 
 #### A2. Test within-subject relationship by trial type and participant race
 
+```{r}
+gendat$ParRace.e = -1
+gendat$ParRace.e[gendat$ParRace == "White"] = 1
+
+b1.both = lmer(RT ~ P2.mean+P2.meancent.scale*ParRace.e + (1|Subject), data = gendat)
+
+sum.b1both = summary(b1.both)
+sum.b1both$call
+sum.b1both$varcor
+table = round(sum.b1both$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = F, background = "#FFFF66") %>% 
+  row_spec(which(1:length(row.names(table)) %in% grep("P2", row.names(table))), bold = T)
+
+tempBlack = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(gendat, ParRace == "Black"))
+
+```
+
 #####**Black participants:**  
 ``` {r}
 # Add predictors, effect coding
@@ -89,8 +108,6 @@ gendat$TarGender.e[gendat$TarGender == "male"] = 1
 gendat$Fix.e = -1
 gendat$Fix.e[gendat$Fix == "forehead"] = 1
 
-gendat$ParRace.e = -1
-gendat$ParRace.e[gendat$ParRace == "White"] = 1
 
 # include condition predictors
 b1.b = lmer(RT ~ P2.mean+P2.meancent.scale*TarRace.e*TarGender.e*Fix.e + (1|Subject), data = filter(gendat, ParRace == "Black"))
@@ -360,12 +377,12 @@ names(table.white) = c("Target_Race", "Target_Gender", "Fix", "Intercept", "Slop
 
 # display
 blackPs.plot
-kable(table.black[order(table.black$Slope),], row.names=F) %>%   
+kable(table.black, row.names=F) %>%   
   kable_styling(bootstrap_options = c("striped","condensed"), full_width = F, position = "center") %>%
   row_spec(which(table[,3] == "eyes"), background = "#DCDCDC")
   
 whitePs.plot
-kable(table.white[order(table.white$Slope),], row.names=F) %>%   
+kable(table.white, row.names=F) %>%   
   kable_styling(bootstrap_options = c("striped","condensed"), full_width = F, position = "center") %>%
   row_spec(which(table[,3] == "eyes"), background = "#DCDCDC")
 
@@ -640,7 +657,25 @@ effect.size = (full[2] - reduced[2])/(1-full[2])
 ```
 
 #### B2. Test within-subject relationship by trial type and participant race
+```{r}
+racedat$ParRace.e = -1
+racedat$ParRace.e[racedat$ParRace == "White"] = 1
 
+b1.b = lmer(RT ~ P2.mean+P2.meancent.scale*ParRace.e + (1|Subject), data = racedat)
+
+sum.b1b = summary(b1.b)
+sum.b1b$call
+sum.b1b$varcor
+table = round(sum.b1b$coefficients, digits=3)
+kable(table) %>% 
+  kable_styling(full_width = F, position = "center") %>% 
+  row_spec(which(table[,5] < .05), bold = F, background = "#FFFF66") %>% 
+  row_spec(which(1:length(row.names(table)) %in% grep("P2", row.names(table))), bold = T)
+
+tempWhite = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(racedat, ParRace == "White"))
+tempBlack = lmer(RT ~ P2.mean+P2.meancent.scale + (1|Subject), data = filter(racedat, ParRace == "Black"))
+
+```
 #####**Black participants:**  
 ``` {r}
 # Add predictors, effect coding
@@ -653,10 +688,9 @@ racedat$TarGender.e[racedat$TarGender == "male"] = 1
 racedat$Fix.e = -1
 racedat$Fix.e[racedat$Fix == "forehead"] = 1
 
-racedat$ParRace.e = -1
-racedat$ParRace.e[racedat$ParRace == "White"] = 1
-
 # include condition predictors
+
+
 b1.b = lmer(RT ~ P2.mean+P2.meancent.scale*TarRace.e*TarGender.e*Fix.e + (1|Subject), data = filter(racedat, ParRace == "Black"))
 
 sum.b1b = summary(b1.b)
@@ -924,12 +958,12 @@ names(table.white) = c("Target_Race", "Target_Gender", "Fix", "Intercept", "Slop
 
 # display
 blackPs.plot
-kable(table.black[order(table.black$Slope),], row.names=F) %>%   
+kable(table.black, row.names=F) %>%   
   kable_styling(bootstrap_options = c("striped","condensed"), full_width = F, position = "center") %>%
   row_spec(which(table[,3] == "eyes"), background = "#DCDCDC")
   
 whitePs.plot
-kable(table.white[order(table.white$Slope),], row.names=F) %>%   
+kable(table.white, row.names=F) %>%   
   kable_styling(bootstrap_options = c("striped","condensed"), full_width = F, position = "center") %>%
   row_spec(which(table[,3] == "eyes"), background = "#DCDCDC")
 
