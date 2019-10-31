@@ -813,8 +813,83 @@ forehead
 </div>
 <div id="examining-betweenwithin-stimulus-group-effects" class="section level2">
 <h2>2. Examining between/within stimulus group effects</h2>
-<p>To examine the P2-&gt;RT relationship within stimulus type and between stimulus type, I created two new variables. P2.withinSub.betweenStim = mean P2 for each stimulus type, centered within sub P2.withinSub.withinStim = trial level P2, centered within each stim type, centered within sub</p>
-<p><strong>Not calculated</strong></p>
+<p>To examine the P2-&gt;RT relationship within stimulus type and between stimulus type, I created two new variables. P2.withinSub.betweenStim = mean P2 for each stimulus type, centered within sub P2.withinSub.withinStim = trial level P2, centered within each stim type, centered within sub P2.withinSub.withinStim.scale = trial level P2, centered within each stim type, centered within sub, standardized</p>
+<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: 
+## RT ~ P2.mean + P2.withinSub.withinStim + P2.withinSub.betweenStim +  
+##     (1 | Subject)
+##    Data: dat
+## 
+## REML criterion at convergence: 1111096
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.3201 -0.6649 -0.1112  0.5363  4.5659 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  Subject  (Intercept) 1460     38.22   
+##  Residual             7036     83.88   
+## Number of obs: 94962, groups:  Subject, 62
+## 
+## Fixed effects:
+##                            Estimate Std. Error         df t value Pr(&gt;|t|)
+## (Intercept)               4.575e+02  4.957e+00  6.577e+01  92.296   &lt;2e-16
+## P2.mean                  -2.862e-02  3.071e-01  4.547e+04  -0.093    0.926
+## P2.withinSub.withinStim  -3.950e-01  3.141e-02  9.490e+04 -12.575   &lt;2e-16
+## P2.withinSub.betweenStim -2.227e+00  2.041e-01  9.490e+04 -10.916   &lt;2e-16
+##                             
+## (Intercept)              ***
+## P2.mean                     
+## P2.withinSub.withinStim  ***
+## P2.withinSub.betweenStim ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##              (Intr) P2.men P2.wthnSb.wS
+## P2.mean      -0.195                    
+## P2.wthnSb.wS  0.000  0.000             
+## P2.wthnSb.bS  0.000  0.000  0.000</code></pre>
+<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+## lmerModLmerTest]
+## Formula: 
+## RT ~ P2.mean + P2.withinSub.withinStim.scale + P2.withinSub.betweenStim +  
+##     (1 | Subject)
+##    Data: dat
+## 
+## REML criterion at convergence: 1111091
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -3.3201 -0.6649 -0.1112  0.5363  4.5659 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  Subject  (Intercept) 1460     38.22   
+##  Residual             7036     83.88   
+## Number of obs: 94962, groups:  Subject, 62
+## 
+## Fixed effects:
+##                                 Estimate Std. Error         df t value
+## (Intercept)                    4.575e+02  4.957e+00  6.577e+01  92.296
+## P2.mean                       -2.862e-02  3.071e-01  4.547e+04  -0.093
+## P2.withinSub.withinStim.scale -3.423e+00  2.722e-01  9.490e+04 -12.575
+## P2.withinSub.betweenStim      -2.227e+00  2.041e-01  9.490e+04 -10.916
+##                               Pr(&gt;|t|)    
+## (Intercept)                     &lt;2e-16 ***
+## P2.mean                          0.926    
+## P2.withinSub.withinStim.scale   &lt;2e-16 ***
+## P2.withinSub.betweenStim        &lt;2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Correlation of Fixed Effects:
+##             (Intr) P2.men P2.S.S.
+## P2.mean     -0.195               
+## P2.wthnS.S.  0.000  0.000        
+## P2.wthnSb.S  0.000  0.000  0.000</code></pre>
 </div>
 
 

@@ -327,9 +327,9 @@ ggsave("./Figures/RaceTask_allPs_malefaces.tiff", zoom.allPs.malefaces.nolegend,
 To examine the P2->RT relationship within stimulus type and between stimulus type, I created two new variables.
 P2.withinSub.betweenStim = mean P2 for each stimulus type, centered within sub
 P2.withinSub.withinStim = trial level P2, centered within each stim type, centered within sub
+P2.withinSub.withinStim.scale = trial level P2, centered within each stim type, centered within sub, standardized
 
-**Not calculated**
-``` {r, eval = F}
+``` {r}
 dat$P2.withinSub.betweenStim = NULL
 dat$P2.withinSub.withinStim = NULL
 
@@ -354,4 +354,8 @@ for (i in unique(dat$Subject)) {
 
 b5 = lmer(RT ~ P2.mean+P2.withinSub.withinStim+P2.withinSub.betweenStim + (1|Subject), data = dat)
 summary(b5)
+
+b6 = lmer(RT ~ P2.mean+P2.withinSub.withinStim.scale+P2.withinSub.betweenStim + (1|Subject), data = dat)
+summary(b6)
+
 ```
