@@ -43,8 +43,8 @@ gendat$TarGender.e[gendat$TarGender == "Male"] = 1
 m1 = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e*TarGender.e|Subject), data = gendat)
 
 # check convergence issue
- relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
- max(abs(relgrad)) # since this value is really small, model is ok
+ # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
+ # max(abs(relgrad)) # since this value is really small, model is ok
 
 sum.m1 = summary(m1)
 sum.m1$call
@@ -64,7 +64,7 @@ sds = filter(gendat, Electrode == "CZ") %>%
   summarise_all(list(RTsd = sd)) %>% 
   as.data.frame()
 
-kable(cbind(rts, sds[5])) %>% 
+kable(cbind(rts, sds[3])) %>% 
   kable_styling(full_width = F, position = "center")
 ```
 
@@ -123,7 +123,7 @@ m2 = lmer(RT ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = r
 sum.m2 = summary(m2)
 sum.m2$call
 sum.m2$varcor
-kable(round(sum.m1$coefficients, digits=3)) %>% 
+kable(round(sum.m2$coefficients, digits=3)) %>% 
   kable_styling(full_width = F, position = "center")
 
 rts = filter(racedat, Electrode == "CZ") %>% 
@@ -138,13 +138,15 @@ sds = filter(racedat, Electrode == "CZ") %>%
   summarise_all(list(RTsd = sd)) %>% 
   as.data.frame()
 
-kable(cbind(rts, sds[5])) %>% 
+kable(cbind(rts, sds[3])) %>% 
   kable_styling(full_width = F, position = "center")
 ```
 See markdown code for breaking down interactions.
 ```{r, eval=F}
-m2.b = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, TarRace == "Black"))
-m2.w = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, TarRace == "White"))
+m2.b = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, TarRace == "Black")) %>%
+  summary()
+m2.w = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, TarRace == "White")) %>%
+  summary()
 
 ```
 
