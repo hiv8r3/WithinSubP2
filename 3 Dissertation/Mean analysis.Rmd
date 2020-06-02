@@ -17,7 +17,7 @@ library(ggpubr)
 library(cowplot)
 
 
-dat = read.delim("AllSubs_bothTasks_acceptedTrials_long_nobs_nobe_withRT_meancenteredP2.txt")
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2_withP3_meancenteredP3.txt")
 ```
 
 ## 1. RTs
@@ -183,7 +183,7 @@ DV is trial level data. Incorrect trials and trials with +/- 75 uV artifacts are
 Included n = 64
 
 ```{r}
-m1 = lmer(meanAmp ~ TarRace.e*TarGender.e + (TarRace.e*TarGender.e|Subject), data = gendat)
+m1 = lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e*TarGender.e|Subject), data = gendat)
 
 # check convergence issue
  # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
@@ -204,7 +204,7 @@ DV is trial level data. Incorrect trials and trials with +/- 75 uV artifacts are
 Included n = 65
 
 ```{r}
-m2 = lmer(meanAmp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = racedat)
+m2 = lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = racedat)
 
 sum.m2 = summary(m2)
 sum.m2$call
@@ -221,5 +221,21 @@ m2.b = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, Tar
 m2.w = lmer(RT ~ TarGender.e + (TarGender.e|Subject), data = filter(racedat, TarRace == "White")) %>%
   summary()
 
+```
+
+## 3. Task differences
+
+### 3a. RT
+
+``` {r}
+m1 = lmer(RT ~ Task + (Task|Subject), data = dat)
+summary(m1)
+```
+
+### 3b. P2
+
+``` {r}
+m2 = lmer(P2amp ~ Task + (Task|Subject), data = dat)
+summary(m2)
 ```
 

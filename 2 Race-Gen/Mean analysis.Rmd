@@ -17,7 +17,7 @@ library(ggpubr)
 library(cowplot)
 
 
-dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2_meancenteredP3_withStimRatings.txt")
 ```
 
 ## 1. RTs
@@ -252,7 +252,7 @@ Included n = 63 (32 black, 31 white)
 
 ```{r}
 
-m1 = lmer(value ~ TarRace.e*TarGender.e*Fix.e*ParRace.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat)
+m1 = lmer(P2amp ~ TarRace.e*TarGender.e*Fix.e*ParRace.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = gendat)
 
 # check convergence issue
  # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
@@ -268,12 +268,12 @@ kable(round(sum.m1$coefficients, digits=3)) %>%
 
 See markdown code for breaking down interactions.
 ```{r, eval=F}
-m1.e = lmer(value ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, Fix == "eyes"))
+m1.e = lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, Fix == "eyes"))
 
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(gendat, Fix == "eyes" & TarRace == "Black")) %>% summary()
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(gendat, Fix == "eyes" & TarRace == "White")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(gendat, Fix == "eyes" & TarRace == "Black")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(gendat, Fix == "eyes" & TarRace == "White")) %>% summary()
 
-m1.f = lmer(value ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, Fix == "forehead"))
+m1.f = lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(gendat, Fix == "forehead"))
 
 
 ```
@@ -286,7 +286,7 @@ Included n = 63 (33 black, 30 white)
 
 ```{r}
 
-m2 = lmer(value ~ TarRace.e*TarGender.e*ParRace.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = racedat)
+m2 = lmer(P2amp ~ TarRace.e*TarGender.e*ParRace.e*Fix.e + (TarRace.e+TarGender.e+Fix.e|Subject), data = racedat)
 
 # check convergence issue
  # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
@@ -304,7 +304,7 @@ Breaking down interactions:
 ```{r}
 rts = filter(racedat, Electrode == "CZ") %>%
   filter(Subject != 28) %>% # NA values
-  select(value, TarRace, TarGender, Fix) %>% 
+  select(P2amp, TarRace, TarGender, Fix) %>% 
   group_by(TarRace, TarGender, Fix) %>% 
   summarise_all(list(P2mean = mean)) %>% 
   as.data.frame()
@@ -314,26 +314,43 @@ rts = filter(racedat, Electrode == "CZ") %>%
 
 *Eyes fixation:*  
 ```{r}
-lmer(value ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, Fix == "eyes")) %>% summary()
+lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, Fix == "eyes")) %>% summary()
 ```
 Black faces:  
 ```{r}
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "eyes" & TarRace == "Black")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "eyes" & TarRace == "Black")) %>% summary()
 ```
 White faces:  
 ```{r}
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "eyes" & TarRace == "White")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "eyes" & TarRace == "White")) %>% summary()
 ```
 
 *Forehead fixation:*  
 ``` {r}
-lmer(value ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, Fix == "forehead")) %>% summary()
+lmer(P2amp ~ TarRace.e*TarGender.e + (TarRace.e+TarGender.e|Subject), data = filter(racedat, Fix == "forehead")) %>% summary()
 ```
 Black faces:  
 ```{r}
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "forehead" & TarRace == "Black")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "forehead" & TarRace == "Black")) %>% summary()
 ```
 White faces:  
 ```{r}
-lmer(value ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "forehead" & TarRace == "White")) %>% summary()
+lmer(P2amp ~ TarGender.e + (TarRace.e|Subject), data = filter(racedat, Fix == "forehead" & TarRace == "White")) %>% summary()
+```
+
+
+## 3. Task differences
+
+### 3a. RT
+
+``` {r}
+m1 = lmer(RT ~ Task + (Task|Subject), data = dat)
+summary(m1)
+```
+
+### 3b. P2
+
+``` {r}
+m2 = lmer(P2amp ~ Task + (Task|Subject), data = dat)
+summary(m2)
 ```
