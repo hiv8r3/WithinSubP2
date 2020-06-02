@@ -23,7 +23,7 @@ theme_hve = function (base_size = 20,
 
 # Study 1 -----------------------------------------------------------------
 
-ERPfix = read.delim("./1 ERP-fix/AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+ERPfix = read.delim("./1 ERP-fix/AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2_withP3_meancenteredP3.txt")
 
 # bar graph
 # RT
@@ -39,6 +39,16 @@ ggplot(ERPfix, aes(Race, RT, fill = Fix)) +
   coord_cartesian(ylim = c(425, 525))
 
 dev.off()
+
+# no fixation
+ggplot(ERPfix, aes(Race, RT, fill = Race)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge", color = "black") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("white","grey70")) +
+  theme_hve() +
+  theme(legend.position = "bottom") +
+  coord_cartesian(ylim = c(450, 500))
 
 
 # P2
@@ -59,9 +69,24 @@ ggplot(ERPfix, aes(Race, MeanAmp, shape = Fix)) +
 
 dev.off()
 
+ggplot(ERPfix, aes(Race, P2amp)) +
+  stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
+  labs(y = "P2 amplitude", x = "Target Race") +
+  scale_shape_manual(values=c(1, 16)) +
+  #scale_fill_manual(values=c("white","grey70"), guide = guide_legend(title = "Fixation")) +
+  theme_hve() +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(position = "right") +
+  coord_cartesian(ylim = c(1, 5)) +
+  theme(axis.title = element_text(color = "blue"),
+        axis.text = element_text(color = "blue"))
+
+
+
 # Study 2 -----------------------------------------------------------------
 
-RaceGen = read.delim("./2 Race-Gen/AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+RaceGen = read.delim("./2 Race-Gen/AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2_meancenteredP3_withStimRatings.txt")
 
 RG_racetask = filter(RaceGen, Task == "Race")
 RG_gentask = filter(RaceGen, Task == "Gender")
@@ -85,6 +110,16 @@ ggplot(RG_racetask, aes(TarRace, RT, fill = TarGender)) +
 
 dev.off()
 
+# no fixation
+ggplot(RG_racetask, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
+  theme_hve() +
+  coord_cartesian(ylim = c(410, 510)) +
+  theme(legend.position = "bottom") 
+
 # Gen Task
 win.metafile("./4 Figures/Study2_RT_GenTask_bar.wmf")
 
@@ -100,17 +135,26 @@ ggplot(RG_gentask, aes(TarRace, RT, fill = TarGender)) +
 
 dev.off()
 
+# no fixation
+ggplot(RG_gentask, aes(TarRace, RT, fill = TarGender)) +
+  stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
+  stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
+  theme_hve() +
+  coord_cartesian(ylim = c(410, 510)) +
+  theme(legend.position = "bottom") 
+
 
 # Separate by participant race (RT) --------------------------------------------
 
 # Race Task
 RaceTask_BlackPs = 
   ggplot(filter(RG_racetask, ParRace == "Black"), aes(TarRace, RT, fill = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
   theme_hve() +
   ggtitle("Black Ps") +
   coord_cartesian(ylim = c(405, 510)) +
@@ -118,27 +162,27 @@ RaceTask_BlackPs =
 
 RaceTask_WhitePs = 
   ggplot(filter(RG_racetask, ParRace == "White"), aes(TarRace, RT, fill = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
   theme_hve() +
   ggtitle("White Ps") +
   coord_cartesian(ylim = c(405, 510)) +
   theme(legend.position = "bottom") 
 
-ggsave(RaceTask_WhitePs, file="./4 Figures/Stim type/vector files/Study2_RT_RaceTask_WhitePs.tiff", width=7, height=5.5)
-ggsave(RaceTask_BlackPs, file="./4 Figures/Stim type/vector files/Study2_RT_RaceTask_BlackPs.tiff", width=7, height=5.5)
+RaceTask_BlackPs
+RaceTask_WhitePs
+# ggsave(RaceTask_WhitePs, file="./4 Figures/Stim type/vector files/Study2_RT_RaceTask_WhitePs.tiff", width=7, height=5.5)
+# ggsave(RaceTask_BlackPs, file="./4 Figures/Stim type/vector files/Study2_RT_RaceTask_BlackPs.tiff", width=7, height=5.5)
 
 # Gender task
 GenTask_BlackPs = 
   ggplot(filter(RG_gentask, ParRace == "Black"), aes(TarRace, RT, fill = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
   theme_hve() +
   ggtitle("Black Ps") +
   coord_cartesian(ylim = c(405, 510)) +
@@ -146,18 +190,20 @@ GenTask_BlackPs =
 
 GenTask_WhitePs = 
   ggplot(filter(RG_gentask, ParRace == "White"), aes(TarRace, RT, fill = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
   stat_summary(fun.y = mean, geom = "bar", position = "dodge") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2) +
-  labs(y = "Reaction Time", x = "Target Race") +
-  scale_fill_manual(values=c("black","grey70"), guide = guide_legend(title = "Fixation")) +
+  labs(y = "Reaction Time (ms)", x = "Target Race") +
+  scale_fill_manual(values=c("black","grey70")) +
   theme_hve() +
   ggtitle("White Ps") +
   coord_cartesian(ylim = c(405, 510)) +
   theme(legend.position = "bottom") 
 
-ggsave(GenTask_WhitePs, file="./4 Figures/Stim type/vector files/Study2_RT_GenTask_WhitePs.tiff", width=7, height=5.5)
-ggsave(GenTask_BlackPs, file="./4 Figures/Stim type/vector files/Study2_RT_GenTask_BlackPs.tiff", width=7, height=5.5)
+GenTask_BlackPs
+GenTask_WhitePs
+
+# ggsave(GenTask_WhitePs, file="./4 Figures/Stim type/vector files/Study2_RT_GenTask_WhitePs.tiff", width=7, height=5.5)
+# ggsave(GenTask_BlackPs, file="./4 Figures/Stim type/vector files/Study2_RT_GenTask_BlackPs.tiff", width=7, height=5.5)
 
 # P2
 
@@ -200,8 +246,7 @@ dev.off()
 
 # Race Task 
 RaceTask_BlackPs = 
-  ggplot(filter(RG_racetask, ParRace == "Black"), aes(TarRace, value, fill = TarGender, shape = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
+  ggplot(filter(RG_racetask, ParRace == "Black"), aes(TarRace, P2amp, fill = TarGender, shape = TarGender)) +
   stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
   scale_shape_manual(values=c(1, 16)) +
@@ -214,8 +259,7 @@ RaceTask_BlackPs =
         axis.text = element_text(color = "blue"))
 
 RaceTask_WhitePs = 
-  ggplot(filter(RG_racetask, ParRace == "White"), aes(TarRace, value, fill = TarGender, shape = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
+  ggplot(filter(RG_racetask, ParRace == "White"), aes(TarRace, P2amp, fill = TarGender, shape = TarGender)) +
   stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
   scale_shape_manual(values=c(1, 16)) +
@@ -235,8 +279,7 @@ graph2ppt(RaceTask_BlackPs, file="./4 Figures/Stim type/vector files/Study2_RT_R
 
 # Gender Task
 GenTask_BlackPs = 
-  ggplot(filter(RG_gentask, ParRace == "Black"), aes(TarRace, value, fill = TarGender, shape = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
+  ggplot(filter(RG_gentask, ParRace == "Black"), aes(TarRace, P2amp, fill = TarGender, shape = TarGender)) +
   stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
   scale_shape_manual(values=c(1, 16)) +
@@ -249,8 +292,7 @@ GenTask_BlackPs =
         axis.text = element_text(color = "blue"))
 
 GenTask_WhitePs = 
-  ggplot(filter(RG_gentask, ParRace == "White"), aes(TarRace, value, fill = TarGender, shape = TarGender)) +
-  facet_wrap(~Fix, labeller=labeller(Fix = facet_labels)) +
+  ggplot(filter(RG_gentask, ParRace == "White"), aes(TarRace, P2amp, fill = TarGender, shape = TarGender)) +
   stat_summary(fun.y = mean, geom = "point", size=4, position = position_dodge(width=.9), color = "blue") +
   stat_summary(fun.data = mean_cl_normal, geom = "errorbar", position = position_dodge(width=.9), width = .2, size = 1, color = "blue") + 
   scale_shape_manual(values=c(1, 16)) +

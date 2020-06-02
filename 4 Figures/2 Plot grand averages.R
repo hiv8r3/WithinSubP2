@@ -53,18 +53,49 @@ ggplot(ERPfix, aes(Time, CPZ, group = Condition)) +
         axis.title = element_text(size = 24),
         strip.text = element_text(size = 18)) +
   scale_x_continuous("Time (ms)",
-                     limits=c(-100, 400),
+                     limits=c(-100, 1000),
                      expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
-                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
   geom_hline(yintercept=0) + # adds x axis
   geom_vline(xintercept=0) +
-  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
-  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
   ylab("Amplitude (uV)") +
   scale_color_manual(values=condColors4) +
   scale_linetype_manual(values=condLinetype4)
 
-ggsave("4 Figures/Grand averages/1 ERP-fix/RaceXFix_RaceTask_CPZ.jpg", width=8, height=5, units="in")
+ggsave("4 Figures/Grand averages/1 ERP-fix/RaceXFix_RaceTask_CPZ_fullepoch.jpg", width=10, height=5, units="in")
+
+
+# CPZ (Race Task) - no fixation
+condColors2 <- c("Black_eyes" = "blueviolet",
+                 "White_eyes" = "darkblue")
+
+ggplot(filter(ERPfix, Fix == "eyes"), aes(Time, CPZ, group = Condition)) + 
+  geom_line(lwd=1,aes(color = Condition)) +
+  P2box + 
+  # geom_ribbon(aes(ymax=CPZ+CPZ.SE, ymin=CPZ-CPZ.SE, color = Condition),
+  #             alpha = .14,
+  #             linetype = "dotted",
+  #             size = .3) +
+  theme_bw() + 
+  theme(panel.grid.major = none,
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) +
+  scale_x_continuous("Time (ms)",
+                     limits=c(-100, 1000),
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") +
+  scale_color_manual(values=condColors2) 
+
+ggsave("4 Figures/Grand averages/1 ERP-fix/RaceXFix_RaceTask_CPZ_fullepoch_nofix.jpg", width=10, height=5, units="in")
 
 # 2. Race-Gen -------------------------------------------------------------
 
@@ -129,18 +160,18 @@ ggplot(gentask, aes(Time, CPZ, group = Condition)) +
         axis.title = element_text(size = 24),
         strip.text = element_text(size = 18)) + 
   scale_x_continuous("Time (ms)", 
-                     limits=c(-100, 400), 
+                     limits=c(-100, 1000), 
                      expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
-                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
   geom_hline(yintercept=0) + # adds x axis
   geom_vline(xintercept=0) +
-  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
-  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14.5), expand= T) +  # scale_y_reverse flips y axis
   ylab("Amplitude (uV)") +
   scale_color_manual(values=condColors8) +
   scale_linetype_manual(values=condLinetype8)
 
-ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_GenderTask_CPZ.jpg", width=9, height=8, units="in")
+ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_GenderTask_CPZ_fullepoch.jpg", width=10, height=8, units="in")
 
 # CPZ (Race Task)
 ggplot(racetask, aes(Time, CPZ, group = Condition)) + 
@@ -154,18 +185,94 @@ ggplot(racetask, aes(Time, CPZ, group = Condition)) +
         axis.title = element_text(size = 24),
         strip.text = element_text(size = 18)) + 
   scale_x_continuous("Time (ms)", 
-                     limits=c(-100, 400), 
+                     limits=c(-100, 1000), 
                      expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
-                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
   geom_hline(yintercept=0) + # adds x axis
   geom_vline(xintercept=0) +
-  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
-  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14.5), expand= T) +  # scale_y_reverse flips y axis
   ylab("Amplitude (uV)") +
   scale_color_manual(values=condColors8) +
   scale_linetype_manual(values=condLinetype8)
 
-ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_RaceTask_CPZ.jpg", width=9, height=8, units="in")
+ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_RaceTask_CPZ_fullepoch.jpg", width=10, height=8, units="in")
+
+# All electrodes (Race Task)
+long = gather(racetask, Electrode, amp, CZ:CP4)
+
+ggplot(filter(long, Condition == "Black_female_eyes" & ParRace == "Black"), aes(Time, amp, group = Electrode)) + 
+  geom_line(lwd=1,aes(color = Electrode)) +
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") 
+
+ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_RaceTask_allelec_fullepoch.jpg", width=14, height=8, units="in")
+
+# CPZ (Gender Task) - no fixation
+condColors4 <- c("Black_male_eyes" = "blueviolet",
+                 "Black_female_eyes" = "darkgoldenrod2",
+                 "White_male_eyes" = "darkblue",
+                 "White_female_eyes" = "forestgreen")
+
+ggplot(filter(gentask, Fix == "eyes"), aes(Time, CPZ, group = Condition)) + 
+  geom_line(lwd=1,aes(color = Condition)) +
+  P2box + 
+  facet_grid(ParRace~., labeller=labeller(ParRace = labels)) +
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 24)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14.5), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") +
+  scale_color_manual(values=condColors4) 
+
+ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_GenderTask_CPZ_fullepoch_nofix.jpg", width=10, height=8, units="in")
+
+# CPZ (Race Task) - no fixation
+ggplot(filter(racetask, Fix == "eyes"), aes(Time, CPZ, group = Condition)) + 
+  geom_line(lwd=1,aes(color = Condition)) +
+  P2box + 
+  facet_grid(ParRace~., labeller=labeller(ParRace = labels)) +
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 24)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14.5), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)") +
+  scale_color_manual(values=condColors4)
+
+ggsave("4 Figures/Grand averages/2 Race-Gen/RaceXGenXFix_RaceTask_CPZ_fullepoch_nofix.jpg", width=10, height=8, units="in")
 
 # 3. Dissertation -------------------------------------------------------------
 
@@ -196,18 +303,18 @@ ggplot(dissdata[dissdata$Task == "GenTask",], aes(Time, CPZ_ind.avg_grand.avg, g
         axis.title = element_text(size = 24),
         strip.text = element_text(size = 18)) + 
   scale_x_continuous("Time (ms)", 
-                     limits=c(-100, 400), 
+                     limits=c(-100, 1000), 
                      expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
-                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
   geom_hline(yintercept=0) + # adds x axis
   geom_vline(xintercept=0) +
-  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
-  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
   ylab("Amplitude (uV)") +
   scale_color_manual(values=condColorsDiss) +
   scale_linetype_manual(values=condLinetypeDiss)
 
-ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_GenderTask_CPZ.jpg", width=8, height=5, units="in")
+ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_GenderTask_CPZ_fullepoch.jpg", width=10, height=6, units="in")
 
 # CPZ (Race Task)
 ggplot(dissdata[dissdata$Task == "RaceTask",], aes(Time, CPZ_ind.avg_grand.avg, group = Condition)) + 
@@ -220,16 +327,135 @@ ggplot(dissdata[dissdata$Task == "RaceTask",], aes(Time, CPZ_ind.avg_grand.avg, 
         axis.title = element_text(size = 24),
         strip.text = element_text(size = 18)) + 
   scale_x_continuous("Time (ms)", 
-                     limits=c(-100, 400), 
+                     limits=c(-100, 1000), 
                      expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
-                     breaks=c(-100, 0, 100, 200, 300, 400)) +
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
   geom_hline(yintercept=0) + # adds x axis
   geom_vline(xintercept=0) +
-  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8))+
-  coord_cartesian(ylim =c(-4.5, 8), expand= T) +  # scale_y_reverse flips y axis
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
   ylab("Amplitude (uV)") +
   scale_color_manual(values=condColorsDiss) +
   scale_linetype_manual(values=condLinetypeDiss)
 
-ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_RaceTask_CPZ.jpg", width=8, height=5, units="in")
+ggsave("4 Figures/Grand averages/3 Dissertation/RaceXGen_RaceTask_CPZ_fullepoch.jpg", width=10, height=6, units="in")
+
+
+
+# Grand-grand averages comparing tasks ------------------------------------
+
+
+# 2. Race-Gen -------------------------------------------------------------
+
+s2dat = rbind(read.delim("4 Figures/Grand averages/2 Race-Gen/Gender_RaceXGenXFix_whiteSubjects.txt"),
+              read.delim("4 Figures/Grand averages/2 Race-Gen/Gender_RaceXGenXFix_blackSubjects.txt"),
+              read.delim("4 Figures/Grand averages/2 Race-Gen/Race_RaceXGenXFix_whiteSubjects.txt"),
+              read.delim("4 Figures/Grand averages/2 Race-Gen/Race_RaceXGenXFix_blackSubjects.txt"))
+
+grandgrand = select(s2dat, Time, Task, CZ:CP4) %>% 
+  group_by(Task, Time) %>% 
+  summarise_all(list(mean = mean), na.rm=T)
+
+# CPZ
+ggplot(grandgrand, aes(Time, CPZ_mean, group = Task)) + 
+  ggtitle("Study 2- CPZ") +
+  geom_line(lwd=1,aes(color = Task)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)")
+
+ggsave("4 Figures/Grand averages/2 Race-Gen/GrandGrand/Study2_CPZ_fullepoch.jpg", width=14, height=8, units="in")
+
+# PZ
+ggplot(grandgrand, aes(Time, PZ_mean, group = Task)) + 
+  ggtitle("Study 2- PZ") +
+  geom_line(lwd=1,aes(color = Task)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)")
+
+ggsave("4 Figures/Grand averages/2 Race-Gen/GrandGrand/Study2_PZ_fullepoch.jpg", width=14, height=8, units="in")
+
+
+# 3. Dissertation ---------------------------------------------------------
+
+dissdata = read.delim("4 Figures/Grand averages/3 Dissertation/BothTasks_grandaverages_noBS.txt")
+
+grandgrand = select(dissdata, Time, Task, CPZ_ind.avg_grand.avg, PZ_ind.avg_grand.avg) %>% 
+  group_by(Task, Time) %>% 
+  summarise_all(list(mean = mean), na.rm=T) %>% 
+  rename(CPZ = CPZ_ind.avg_grand.avg_mean,
+         PZ = PZ_ind.avg_grand.avg_mean)
+
+# CPZ
+ggplot(grandgrand, aes(Time, CPZ, group = Task)) + 
+  ggtitle("Study 3- CPZ") +
+  geom_line(lwd=1,aes(color = Task)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)")
+
+ggsave("4 Figures/Grand averages/3 Dissertation/GrandGrand/Study3_CPZ_fullepoch.jpg", width=14, height=8, units="in")
+
+# PZ
+ggplot(grandgrand, aes(Time, PZ, group = Task)) + 
+  ggtitle("Study 3- PZ") +
+  geom_line(lwd=1,aes(color = Task)) +
+  P2box + 
+  theme_bw() + 
+  theme(panel.grid.major = none, 
+        panel.grid.minor = none,
+        axis.text = element_text(size = 22),
+        axis.title = element_text(size = 24),
+        strip.text = element_text(size = 18)) + 
+  scale_x_continuous("Time (ms)", 
+                     limits=c(-100, 1000), 
+                     expand=c(0,0),   # expand=c(0,0) removes extra space before & after data
+                     breaks=c(-100, 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)) +
+  geom_hline(yintercept=0) + # adds x axis
+  geom_vline(xintercept=0) +
+  scale_y_continuous(breaks=c(-4, -2, 0, 2, 4, 6, 8, 10, 12, 14))+
+  coord_cartesian(ylim =c(-4.5, 14), expand= T) +  # scale_y_reverse flips y axis
+  ylab("Amplitude (uV)")
+
+ggsave("4 Figures/Grand averages/3 Dissertation/GrandGrand/Study3_PZ_fullepoch.jpg", width=14, height=8, units="in")
 

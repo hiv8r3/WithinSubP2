@@ -17,7 +17,7 @@ library(ggpubr)
 library(cowplot)
 
 
-dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2.txt")
+dat = read.delim("AllSubs_acceptedTrials_long_nobe_nobs_withRT_meancenteredP2_withP3_meancenteredP3.txt")
 ```
 
 ## 1. RTs
@@ -99,7 +99,7 @@ Included n = 62
 # model specification
 # lmer(MeanAmp ~ 1 + (TarRace.e*Fix.e|Subject) + (1|Elctrode), data = dat) %>%  summary()
 
-m1 = lmer(MeanAmp ~ TarRace.e*Fix.e + (TarRace.e*Fix.e|Subject) + (1|Electrode), data = dat) #only need one observation per trial
+m1 = lmer(P2amp ~ TarRace.e*Fix.e + (TarRace.e*Fix.e|Subject) + (1|Electrode), data = dat) #only need one observation per trial
 
 # check convergence issue
  # relgrad <- with(m1@optinfo$derivs,solve(Hessian,gradient))
